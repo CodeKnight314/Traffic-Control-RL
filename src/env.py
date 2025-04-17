@@ -1,14 +1,12 @@
 from tqdm import tqdm
 from agent import TrafficAgent
-from replay import ReplayBuffer
-
 import yaml
-import gym
+import gymnasium as gym
 import sumo_rl
 import os
 
 class TrafficEnv(): 
-    def __init__(self, config: str, net: str, route: str, weights: str):
+    def __init__(self, config: str, net: str, route: str, weights: str = None):
         with open(config, 'r') as f: 
             self.config = yaml.safe_load(f)
         
@@ -20,26 +18,24 @@ class TrafficEnv():
                             min_green=5,
                             max_depart_delay=0)
         
-        self.observation_spaces = self.env.observation_spaces
-        self.action_spaces = self.env.action_spaces
+        self.observation_space = self.env.observation_space
+        self.action_space = self.env.action_space
         
-        self.agents = {} 
-        for intersection_id in self.observation_spaces.keys():
-            self.agents[intersection_id] = TrafficAgent(
-                obs_dim=self.observation_spaces[intersection_id].n, 
-                ac_dim=self.action_spaces[intersection_id].n,
-                model=self.config["model"], 
-                lr=self.config["lr"], 
-                gamma=self.config["gamma"], 
-                max_memory=self.config["max_memory"], 
-                max_gradient=self.config["max_grad"]
-            )
-            
-            if weights: 
-                try:
-                    self.agents[intersection_id].load_weights(os.path.join(weights, f"intersection_{intersection_id}.pth"))
-                except Exception as e:
-                    print(f"[INFO] Weights for model-{intersection_id} not found.")
+        self.agent = TrafficAgent(
+            obs_dim=self.observation_space.shape[0],
+            ac_dim=self.action_space.n,
+            model=self.config["model"], 
+            lr=self.config["lr"], 
+            gamma=self.config["gamma"], 
+            max_memory=self.config["max_memory"], 
+            max_gradient=self.config["max_grad"]
+        )
+        
+        if weights: 
+            try:
+                self.agent.load_weights(os.path.join(weights, "shared_policy.pth"))
+            except Exception as e:
+                print(f"[INFO] Weights not found, training from scratch.")
         
         self.epsilon = self.config["epsilon"]
         self.epsilon_min = self.config["epsilon_min"]
@@ -55,63 +51,36 @@ class TrafficEnv():
         
         for i in pbar:
             states = self.env.reset()
-            done = {id: False for id in self.agents.keys()}
-            total_reward = {id: 0.0 for id in self.agents.keys()}
-            total_loss = {id: 0.0 for id in self.agents.keys()}
-            
+            done = False
+            total_reward = 0.0
+            total_loss = 0.0
             step = 0
             
-            if i == 0: 
-                epsilon = self.epsilon
-            else: 
-                epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
-                self.epsilon = epsilon
+            epsilon = self.epsilon if i == 0 else max(self.epsilon * self.epsilon_decay, self.epsilon_min)
+            self.epsilon = epsilon
             
-            while not all(done.values()):
-                actions = {}
+            while not done:
+                action = self.agent.select_action(states, epsilon)
+                next_states, reward, done, _ = self.env.step(action)
                 
-                for intersection_id, agent in self.agents.items(): 
-                    if not done[intersection_id]:
-                        actions[intersection_id] = agent.select_action(states[intersection_id], epsilon)
+                self.agent.push(states, action, reward, next_states, done)
                 
-                next_states, rewards, next_done, _ = self.env.step(actions)
-                
-                for intersection_id, agent in self.agents.items(): 
-                    if not next_done[intersection_id]: 
-                        self.agents.push(
-                            states[intersection_id], 
-                            actions[intersection_id],
-                            rewards[intersection_id],
-                            next_states[intersection_id], 
-                            next_done[intersection_id],
-                        )
-                        
-                        total_reward[intersection_id] += rewards[intersection_id]
-                        
+                total_reward += reward
                 states = next_states
-                done = next_done
-            
-                for intersection_id, agent in self.agents.items():
-                    if len(agent.buffer) > self.batch_size: 
-                        total_loss[intersection_id] += agent.update(self.batch_size)
-                        
-                step+=1
+
+                if len(self.agent.buffer) > self.batch_size:
+                    total_loss += self.agent.update(self.batch_size)
+                
+                step += 1
                 
                 if step % self.update_freq == 0:
-                    for agent in self.agents.values():
-                        agent.update_target_network(False)
+                    self.agent.update_target_network(False)
                 
-            avg_reward = sum(total_reward.values()) / len(total_reward)
-            avg_loss = sum(total_loss.values()) / len(total_loss)
-            pbar.set_postfix(reward=avg_reward, loss=avg_loss)
+            avg_loss = total_loss / step if step > 0 else 0.0
+            pbar.set_postfix(reward=total_reward, loss=avg_loss)
         
-        for intersection_id, agent in self.agents.items():
-            agent.save_weights(os.path.join(path, f"intersection_{intersection_id}_model.pth"))
+        self.agent.save_weights(os.path.join(path, "shared_policy.pth"))
             
     def test(self, path: str):
         os.makedirs(path, exist_ok=True)
         pass
-            
-        
-
-    

@@ -61,9 +61,7 @@ class TrafficAgent:
         batch = self.buffer.sample(batch_size)
         states, actions, rewards, next_states, dones = [x.to(self.device) for x in batch]
         
-        actions = actions.long().unsqueeze(1)
-        rewards = rewards.unsqueeze(1)
-        dones = dones.unsqueeze(1)
+        actions = actions.long()
         
         with torch.no_grad():
             max_next_q = self.target(next_states).max(1, keepdim=True)[0]

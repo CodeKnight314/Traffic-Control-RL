@@ -9,17 +9,17 @@ class ReplayBuffer:
     def push(self, state, action, reward, next_state, done): 
         self.memory.append((state, action, reward, next_state, done))
         
-    def sample(self, batch_size: int): 
-        samples = random.sample(self.memory, batch_size)
-        states, actions, rewards, next_states, dones = zip(*samples)
+    def sample(self, batch_size):
+        batch = random.sample(self.memory, batch_size)
+        states, actions, rewards, next_states, dones = zip(*batch)
         
-        states = torch.as_tensor(states, dtype=torch.float32)
-        actions = torch.as_tensor(actions, dtype=torch.int64)
-        rewards = torch.as_tensor(rewards, dtype=torch.float32)
-        next_states = torch.as_tensor(next_states, dtype=torch.float32)
-        dones = torch.as_tensor(dones, dtype=torch.float32)
+        states = torch.stack([torch.tensor(s, dtype=torch.float32) for s in states])
+        actions = torch.tensor(actions, dtype=torch.int64).unsqueeze(1)
+        rewards = torch.tensor(rewards, dtype=torch.float32).unsqueeze(1)
+        next_states = torch.stack([torch.tensor(s, dtype=torch.float32) for s in next_states])
+        dones = torch.tensor(dones, dtype=torch.float32).unsqueeze(1)
         
-        return (states, actions, rewards, next_states, dones)
+        return states, actions, rewards, next_states, dones
     
     def __len__(self): 
         return len(self.memory)

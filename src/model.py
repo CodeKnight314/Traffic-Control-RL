@@ -23,7 +23,7 @@ class DQN(nn.Module):
         torch.save(self.state_dict(), path)
         
 class DuelDQN(nn.Module): 
-    def __inti__(self, input_dim: int, output_dim: int): 
+    def __init__(self, input_dim: int, output_dim: int): 
         super().__init__()
         
         self.main = nn.Sequential(*[
@@ -50,7 +50,7 @@ class DuelDQN(nn.Module):
         value = self.value(output)
         advantage = self.advantage(output)
         
-        q_values = value + (advantage - advantage.mean(dim=1, keepdim=True))
+        q_values = value + (advantage - advantage.mean(dim=-1, keepdim=True))
         return q_values
     
     def load_weights(self, path: str): 

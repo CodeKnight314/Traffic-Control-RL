@@ -5,3 +5,5 @@ numpy
 tqdm
 matplotlib
 pandas
+opencv-python
+pyvirtualdisplay

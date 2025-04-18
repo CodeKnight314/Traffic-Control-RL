@@ -1,4 +1,4 @@
-model: "DuelQN"
+model: "DuelDQN"
 lr: 0.001
 gamma: 0.99
 max_memory: 100000
@@ -6,6 +6,6 @@ max_grad: 1.0
 epsilon: 1.0
 epsilon_decay: 0.995 
 epsilon_min: 0.01
-episodes: 1000
+episodes: 500
 batch_size: 128
 update_freq: 500

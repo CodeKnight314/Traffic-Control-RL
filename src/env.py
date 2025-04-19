@@ -60,6 +60,10 @@ class TrafficEnv():
             total_loss = 0.0
             step = 0
             
+            print(f"[INFO] Training on traffic control task with: ")
+            print(f"    NET: {self.net}")
+            print(f"    ROUTE: {self.route}")
+            
             epsilon = self.epsilon if i == 0 else max(self.epsilon * self.epsilon_decay, self.epsilon_min)
             self.epsilon = epsilon
             
@@ -116,6 +120,10 @@ class TrafficEnv():
 
         done = False
         total_reward = 0.0
+        
+        print(f"[INFO] Rendering for traffic control task with: ")
+        print(f"    NET: {self.net}")
+        print(f"    ROUTE: {self.route}")
 
         while not done:
             frame = env_vis.render()
@@ -165,6 +173,9 @@ class TrafficEnvMulti():
                 max_gradient=self.config["max_grad"]
             )
             
+        self.net = net 
+        self.route = route
+            
         if weights: 
             for agent_id in self.agents.keys():
                 try:
@@ -189,6 +200,10 @@ class TrafficEnvMulti():
             total_reward = {i: 0.0 for i in self.agents.keys()}
             total_loss = {i: 0.0 for i in self.agents.keys()}
             step = 0
+            
+            print(f"[INFO] Training on traffic control task with: ")
+            print(f"    NET: {self.net}")
+            print(f"    ROUTE: {self.route}")
             
             epsilon = self.epsilon if eps == 0 else max(self.epsilon * self.epsilon_decay, self.epsilon_min)
             self.epsilon = epsilon 
@@ -255,6 +270,10 @@ class TrafficEnvMulti():
         
         done = {aid: False for aid in self.agents}
         total_reward = {aid: 0.0 for aid in self.agents}
+        
+        print(f"[INFO] Rendering for traffic control task with: ")
+        print(f"    NET: {self.net}")
+        print(f"    ROUTE: {self.route}")
         
         while not all(done.values()):
             video.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))

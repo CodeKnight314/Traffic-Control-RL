@@ -5,7 +5,7 @@ def main(args):
     if "single-intersection" in args.net:
         env = TrafficEnv(args.config, args.net, args.route, args.weights)
     else: 
-        env = TrafficEnvMulti(args.config, args.net, args.route, args.weight)
+        env = TrafficEnvMulti(args.config, args.net, args.route, args.weights)
         
     if args.train:
         env.train(args.path)

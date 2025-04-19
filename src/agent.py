@@ -22,7 +22,7 @@ class TrafficAgent:
         
         self.opt = AdamW(params=self.model.parameters(), lr=lr)
         
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.SmoothL1Loss()
         self.gamma = gamma
         self.action_dim = ac_dim
         self.max_grad = max_gradient
@@ -32,6 +32,22 @@ class TrafficAgent:
     def load_weights(self, path: str): 
         self.model.load_weights(path)
         self.target.load_weights(path)
+        
+    def load_partial_weights(self, path: str):
+        transfer_weights = torch.load(path)
+        
+        agent_state_dict = self.model.state_dict()
+        
+        matched_weights = {}
+        for name, param in transfer_weights.items():
+            if name in agent_state_dict and param.shape == agent_state_dict[name].shape:
+                matched_weights[name] = param
+            else:
+                continue
+    
+        agent_state_dict.update(matched_weights)
+        self.model.load_state_dict(agent_state_dict)
+        self.target.load_state_dict(agent_state_dict)
     
     def save_weights(self, path: str):
         self.model.save_weights(path)
@@ -64,7 +80,8 @@ class TrafficAgent:
         actions = actions.long()
         
         with torch.no_grad():
-            max_next_q = self.target(next_states).max(1, keepdim=True)[0]
+            next_actions = self.model(next_states).argmax(1, keepdim=True)
+            max_next_q = self.target(next_states).gather(1, next_actions)
             targets = rewards + (1 - dones) * self.gamma * max_next_q
             targets = targets.to(self.device)
             

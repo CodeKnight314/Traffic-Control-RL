@@ -152,8 +152,7 @@ class TrafficEnvMulti():
             num_seconds=1000,
             min_green=0,
             max_depart_delay=0,
-            additional_sumo_cmd="--no-step-log",
-            num_envs=self.config["num_envs"]
+            additional_sumo_cmd="--no-step-log"
         )
         
         states, _ = self.env.reset()
@@ -176,7 +175,12 @@ class TrafficEnvMulti():
         if weights: 
             for agent_id in self.agents.keys():
                 try:
-                    self.agents[agent_id].load_weights(os.path.join(weights, f"intersection_{agent_id}.pth"))
+                    if os.path.isfile(weights):
+                        print(f"[INFO] Loading partials weights for intersection {agent_id} traffic model")
+                        self.agents[agent_id].load_partial_weights(weights)
+                    else:
+                        print(f"[INFO] Loading full weights for intersection {agent_id} traffic model")
+                        self.agents[agent_id].load_weights(os.path.join(weights, f"intersection_{agent_id}.pth"))
                 except Exception as e: 
                     print(f"[ERROR] Agent at intersection {agent_id} could not load weights.")
         
@@ -245,11 +249,10 @@ class TrafficEnvMulti():
             route_file=self.route,
             use_gui=True,
             render_mode="rgb_array",
-            num_seconds=3600,
+            num_seconds=1000,
             min_green=0,
             max_depart_delay=0,
-            additional_sumo_cmd="--no-step-log",
-            num_envs=self.config["num_envs"]
+            additional_sumo_cmd="--no-step-log"
         )
         
         env_vis.metadata['render_fps'] = FPS

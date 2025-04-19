@@ -25,27 +25,28 @@ class DQN(nn.Module):
 class DuelDQN(nn.Module): 
     def __init__(self, input_dim: int, output_dim: int): 
         super().__init__()
-        
-        self.main = nn.Sequential(*[
+        self.input = nn.Sequential(*[
             nn.Linear(input_dim, 128), 
-            nn.ReLU(inplace=True), 
-            nn.Linear(128, 128), 
             nn.ReLU(inplace=True)
         ])
         
-        self.value = nn.Sequential(*[
+        self.main = nn.Sequential(*[
+            nn.Linear(128, 128), 
+            nn.ReLU(inplace=True),
             nn.Linear(128, 128), 
             nn.ReLU(inplace=True), 
+        ])
+        
+        self.value = nn.Sequential(*[ 
             nn.Linear(128, 1)
         ])
         
         self.advantage = nn.Sequential(*[
-            nn.Linear(128, 128), 
-            nn.ReLU(inplace=True), 
             nn.Linear(128, output_dim)
         ])
         
     def forward(self, x: torch.Tensor): 
+        x = self.input(x)
         output = self.main(x)
         value = self.value(output)
         advantage = self.advantage(output)
@@ -58,3 +59,5 @@ class DuelDQN(nn.Module):
         
     def save_weights(self, path: str): 
         torch.save(self.state_dict(), path)
+        
+        

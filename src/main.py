@@ -1,8 +1,12 @@
 import argparse
-from env import TrafficEnv
+from env import TrafficEnv, TrafficEnvMulti
 
 def main(args): 
-    env = TrafficEnv(args.config, args.net, args.route, args.weights)
+    if "single-intersection" in args.net:
+        env = TrafficEnv(args.config, args.net, args.route, args.weights)
+    else: 
+        env = TrafficEnvMulti(args.config, args.net, args.route, args.weight)
+        
     if args.train:
         env.train(args.path)
     else: 

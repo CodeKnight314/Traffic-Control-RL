@@ -59,11 +59,7 @@ class TrafficEnv():
             total_reward = 0.0
             total_loss = 0.0
             step = 0
-            
-            print(f"[INFO] Training on traffic control task with: ")
-            print(f"    NET: {self.net}")
-            print(f"    ROUTE: {self.route}")
-            
+
             epsilon = self.epsilon if i == 0 else max(self.epsilon * self.epsilon_decay, self.epsilon_min)
             self.epsilon = epsilon
             
@@ -86,6 +82,7 @@ class TrafficEnv():
                     self.agent.update_target_network(False)
                 
             avg_loss = total_loss / step if step > 0 else 0.0
+            pbar.set_description(f"Episode {i+1}/{self.episodes} | NET: {self.net.split('/')[-1]} | ROUTE: {self.route.split('/')[-1]}")
             pbar.set_postfix(reward=total_reward, loss=avg_loss)
             
             # To clear 
@@ -193,18 +190,14 @@ class TrafficEnvMulti():
     
     def train(self, path: str): 
         os.makedirs(path, exist_ok=True)
-        pbar = tqdm(range(self.episodes), desc="Episode")
+        pbar = tqdm(range(self.episodes))
         for eps in pbar:
             states, _ = self.env.reset()
             done = {i: False for i in self.agents.keys()}
             total_reward = {i: 0.0 for i in self.agents.keys()}
             total_loss = {i: 0.0 for i in self.agents.keys()}
             step = 0
-            
-            print(f"[INFO] Training on traffic control task with: ")
-            print(f"    NET: {self.net}")
-            print(f"    ROUTE: {self.route}")
-            
+                        
             epsilon = self.epsilon if eps == 0 else max(self.epsilon * self.epsilon_decay, self.epsilon_min)
             self.epsilon = epsilon 
             
@@ -235,6 +228,7 @@ class TrafficEnvMulti():
                         
             avg_loss = sum(total_loss.values()) / len(total_loss.keys())
             avg_reward = sum(total_reward.values()) / len(total_reward.keys())
+            pbar.set_description(f"Episode {eps+1}/{self.episodes} | NET: {self.net.split('/')[-1]} | ROUTE: {self.route.split('/')[-1]}")
             pbar.set_postfix(reward=avg_reward, loss=avg_loss)
             
             os.system('cls' if os.name == "nt" else 'clear')  

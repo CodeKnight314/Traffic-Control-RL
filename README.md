@@ -1,7 +1,7 @@
 # Traffic Control RL
 ## Results
 <p align="center">
-  <img src="resources/gif/demo_mod.gif" alt="Gif of traffix sim across single intersection, 2x2 grid, and 3x3 grid">
+  <img src="resources/gifs/demo_mod.gif" alt="Gif of traffix sim across single intersection, 2x2 grid, and 3x3 grid">
 </p>
 
 ## Overview

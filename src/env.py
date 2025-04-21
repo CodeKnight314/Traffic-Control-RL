@@ -241,7 +241,7 @@ class TrafficEnvMulti():
             agent.save_weights(os.path.join(path, f"intersection_{id}.pth"))
             
     def test(self, path: str):
-        os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
         FPS = 20.0
         
         env_vis = sumo_rl.parallel_env(
